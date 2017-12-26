@@ -85,7 +85,17 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
 
             wp_enqueue_media();
             wp_enqueue_style( 'wp-color-picker' );
-            wp_enqueue_style( 'plvr-framework', plugins_url( 'assets/css/framework.css', __FILE__ ) );
+            wp_enqueue_style( 'select2', plugins_url( 'assets/css/select2.min.css', __FILE__ ) );
+            wp_enqueue_script( 'select2-js', plugins_url( 'assets/js/select2.min.js', __FILE__ ), [ 'jquery' ], false, true );
+            wp_enqueue_script( 'conditionize', plugins_url( 'assets/js/conditionize.js', __FILE__ ), [ 'jquery' ], false, true );
+
+            wp_enqueue_script( 'wp-color-picker-alpha', plugins_url( 'assets/js/wp-color-picker-alpha.min.js', __FILE__ ), [
+                'jquery',
+                'wp-color-picker'
+            ], false, true );
+
+            wp_enqueue_style( 'plvr-framework', plugins_url( 'assets/css/framework.min.css', __FILE__ ) );
+            wp_enqueue_script( 'plvr-framework', plugins_url( 'assets/js/framework.js', __FILE__ ), [ 'jquery' ], false, true );
         }
 
         /**
@@ -134,6 +144,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 'options'       => array(),
                 'custom_attr'   => array(),
                 'condition'     => array(),
+                'rgba'          => 'false',
                 'parsed'        => 'true',
             );
         }
@@ -206,7 +217,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                     continue;
                 }
 
-                $value = ! empty( $_POST[ $field['id'] ] ) ? trim($_POST[ $field['id'] ]) : '';
+                $value = ! empty( $_POST[ $field['id'] ] ) ? trim( $_POST[ $field['id'] ] ) : '';
                 if ( ! empty( $field['sanitize'] ) ) {
                     $function = sanitize_key( $field['sanitize'] );
                     if ( is_callable( $function ) ) {
@@ -233,8 +244,8 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             global $post_id;
             $post_id = $post->ID;
             ob_start();
-            $lazy_loading = $this->options['lazy_loading'] == 'true' ? 'plvr-lazy-loading' : '';
-            echo '<div class="plvr-framework' . $lazy_loading . '">';
+            $lazy_loading = $this->options['lazy_loading'] == 'true' ? 'plvr-lazy-loading loading' : 'loaded';
+            echo '<div class="plvr-framework ' . $lazy_loading . '">';
             echo '<div class="container">';
             echo wp_nonce_field( 'pluginever_fields_nonce', 'pluginever_metabox_nonce' );
             do_action( 'plvr_framework_before_metabox', $post, $this->id );
@@ -307,6 +318,14 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             $value       = get_post_meta( $post_id, $field['id'], true );
             $saved_value = empty( $value ) ? $field['value'] : $value;
 
+            //color picker
+            if($field['type'] == 'colorpicker'){
+                $field_attributes['class'] .= ' color-picker';
+                if( $field['rgba'] == 'true'){
+                    $field_attributes['data-alpha'] = 'true';
+                }
+            }
+
             $custom_attributes = self::get_custom_attribute( $field_attributes );
 
             switch ( $field['type'] ) {
@@ -316,6 +335,9 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 case 'number':
                 case 'hidden':
                 case 'url':
+                    echo '<input type="' . $field['type'] . '" value="' . esc_attr( $saved_value ) . '" ' . implode( ' ', $custom_attributes ) . ' />';
+                    break;
+                case 'colorpicker':
                     echo '<input type="' . $field['type'] . '" value="' . esc_attr( $saved_value ) . '" ' . implode( ' ', $custom_attributes ) . ' />';
                     break;
 

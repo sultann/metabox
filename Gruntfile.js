@@ -43,7 +43,7 @@ module.exports = function (grunt) {
                 banner: compactBannerTemplate,
                 mangle: false,
                 compress: {
-                    drop_console: true
+                    drop_console: false
                 }
             }
         },

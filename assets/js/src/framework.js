@@ -15,7 +15,18 @@ window.Pluginever_Framework = (function(window, document, $, undefined){
 	var app = {};
 
 	app.init = function() {
-        console.log('working');
+	    //initialize select 2
+       if( $('.select2').length > 0){
+           $('.select2').select2();
+       }
+
+        //condition
+        $('.conditional').conditionize();
+
+        //lazy loading
+        setTimeout(function () {
+            $('.plvr-lazy-loading').removeClass('loading').addClass('loaded');
+        }, 1000);
 	};
 
 	$(document).ready( app.init );

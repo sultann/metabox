@@ -437,12 +437,26 @@
     background-image: url("../images/spinner.gif");
     background-repeat: no-repeat;
     background-position: 50%; }
-  .plvr-framework.wpcp-lazy-loading .container {
-    opacity: 0; }
+    .plvr-framework.loading .container {
+      opacity: 0; }
   .plvr-framework .container {
     transition: opacity 0.5s linear; }
   .plvr-framework.loaded .container {
     opacity: 1; }
+  .plvr-framework .select2 .select2-selection, .plvr-framework .select2 .select2-selection__choice {
+    border-radius: 0 !important;
+    margin-bottom: 0 !important; }
+  .plvr-framework .select2 .select2-search__field {
+    line-height: 1.6em !important;
+    height: auto !important; }
+  .plvr-framework .wp-picker-container .color-alpha {
+    height: 22px !important; }
+  .plvr-framework .wp-picker-container .wp-picker-input-wrap label, .plvr-framework .wp-picker-container .wp-picker-input-wrap .button {
+    display: inline-block;
+    font-weight: normal;
+    height: 24px; }
+  .plvr-framework .wp-picker-container .colorpicker {
+    font-weight: normal !important; }
 
 @media screen and (max-width: 768px) {
   .plvr-framework .row .col,
@@ -455,5 +469,7 @@
   .plvr-framework .row [class^='col-']:last-child,
   .plvr-framework .row [class*=" col-"]:last-child {
     margin-bottom: 0; } }
+.select2-dropdown {
+  border-radius: 0 !important; }
 
 /*# sourceMappingURL=framework.css.map */
