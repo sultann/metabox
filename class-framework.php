@@ -17,6 +17,12 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
         private $options = array();
 
         /**
+         * @since 1.0.0
+         * @var array
+         */
+        private $fields = array();
+
+        /**
          * Main Instance
          *
          * @static
@@ -25,7 +31,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
          *
          * @return object Main instance
          *
-         * @since  1.0
+         * @since  1.0.0
          */
         public static function instance( $id ) {
             if ( ! isset( self::$_instance[ $id ] ) ) {
@@ -56,10 +62,16 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
          * @return void
          */
         public function init( $options = array() ) {
-            $this->options = $options;
+            $this->fields = self::set_fields( $options['fields'] );
+            unset( $options['fields'] );
+            $this->options = self::set_options( $options );
             add_action( 'admin_enqueue_scripts', array( $this, 'load_assets' ), 15 );
             add_action( 'add_meta_boxes', array( $this, 'register_metabox' ) );
             add_action( 'save_post', array( $this, 'save_postdata' ) );
+        }
+
+        public function get_fields() {
+            return $this->fields;
         }
 
         /**
@@ -77,6 +89,79 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
         }
 
         /**
+         * Set metabox options
+         *
+         * @since 1.0.0
+         *
+         * @param $options
+         *
+         * @return array
+         */
+        protected static function set_options( $options ) {
+            $default = array(
+                'title'        => __( 'Example Metabox', 'pluginever_framework' ),
+                'screen'       => 'post',   //or array( 'post-type1', 'post-type2')
+                'context'      => 'normal', //('normal', 'advanced', or 'side')
+                'priority'     => 'high',
+                'lazy_loading' => 'false',
+            );
+
+            return wp_parse_args( $options, $default );
+
+        }
+
+        /**
+         * Get default attributes
+         *
+         * @since 1.0.0
+         * @return array
+         */
+        protected static function get_default_field_attr() {
+            return array(
+                'type'          => '',
+                'name'          => '',
+                'id'            => '',
+                'label'         => '',
+                'value'         => '',
+                'placeholder'   => '',
+                'sanitize'      => '',
+                'help'          => '',
+                'class'         => '',
+                'wrapper_class' => '',
+                'addon'         => '',
+                'addon_pos'     => '',
+                'required'      => '',
+                'options'       => array(),
+                'custom_attr'   => array(),
+                'condition'     => array(),
+                'parsed'        => 'true',
+            );
+        }
+
+
+        /**
+         * Set fields
+         *
+         * @since 1.0.0
+         *
+         * @param $fields
+         *
+         * @return array
+         */
+        protected static function set_fields( $fields ) {
+            $result = [];
+            foreach ( $fields as $field ) {
+                $field       = wp_parse_args( $field, self::get_default_field_attr() );
+                $field_id    = empty( $field['id'] ) ? $field['name'] : $field['id'];
+                $field['id'] = $field_id;
+
+                $result[] = $field;
+            }
+
+            return $result;
+        }
+
+        /**
          * Register the metabox
          *
          * call the wp function add_metabox to add the metabox
@@ -86,7 +171,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
          */
         public function register_metabox( $post_type ) {
             if ( in_array( $post_type, (array) $this->options['screen'] ) ) {
-                add_meta_box( $this->id, $this->options['label'], array(
+                add_meta_box( $this->id, $this->options['title'], array(
                     $this,
                     'show_metabox'
                 ), $post_type, $this->options['context'], $this->options['priority'] );
@@ -116,15 +201,23 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             }
 
 
-            foreach ( $this->options['fields'] as $key => $field ) {
-                error_log(print_r($field, true ));
+            foreach ( $this->fields as $key => $field ) {
                 if ( in_array( $field['type'], array( 'title' ) ) ) {
                     continue;
                 }
+
+                $value = ! empty( $_POST[ $field['id'] ] ) ? trim($_POST[ $field['id'] ]) : '';
+                if ( ! empty( $field['sanitize'] ) ) {
+                    $function = sanitize_key( $field['sanitize'] );
+                    if ( is_callable( $function ) ) {
+                        $value = call_user_func( $function, $value );
+                    }
+                }
+
                 if ( $field['type'] == 'checkbox' ) {
-                    add_post_meta( $post_id, $field['id'], '0', true ) || update_post_meta( $post_id, $field['id'], '0' );
-                } else if ( isset( $_POST[ $field['id'] ] ) ) {
-                    add_post_meta( $post_id, $field['id'], $_POST[ $field['id'] ], true ) || update_post_meta( $post_id, $field['id'], $_POST[ $field['id'] ] );
+                    add_post_meta( $post_id, $field['id'], $value, true ) || update_post_meta( $post_id, $value, '0' );
+                } else if ( $value !== '' ) {
+                    add_post_meta( $post_id, $field['id'], $value, true ) || update_post_meta( $post_id, $field['id'], $value );
                 } else {
                     delete_post_meta( $post_id, $field['id'] );
                 }
@@ -141,40 +234,21 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             $post_id = $post->ID;
             ob_start();
             $lazy_loading = $this->options['lazy_loading'] == 'true' ? 'plvr-lazy-loading' : '';
-            echo '<div class="plvr-framework loaded' . $lazy_loading . '">';
+            echo '<div class="plvr-framework' . $lazy_loading . '">';
             echo '<div class="container">';
             echo wp_nonce_field( 'pluginever_fields_nonce', 'pluginever_metabox_nonce' );
             do_action( 'plvr_framework_before_metabox', $post, $this->id );
-            foreach ( $this->options['fields'] as $field ) {
-                $default = array(
-                    'type'          => '',
-                    'name'          => '',
-                    'id'            => '',
-                    'label'         => '',
-                    'value'         => '',
-                    'placeholder'   => '',
-                    'callback'      => '',
-                    'help'          => '',
-                    'class'         => '',
-                    'wrapper_class' => '',
-                    'addon'         => '',
-                    'addon_pos'     => '',
-                    'required'      => '',
-                    'options'       => array(),
-                    'custom_attr'   => array(),
-                    'conditions'    => array()
-                );
-                $field   = wp_parse_args( $field, $default );
+            foreach ( $this->fields as $field ) {
 
                 $class      = '';
                 $attributes = '';
-                if ( ! empty( $conditions ) ) {
+                if ( ! empty( $field['condition'] ) ) {
                     $default    = array(
                         'depend_on'    => '',
                         'depend_value' => '',
                         'depend_cond'  => '', // ==, !=, <=, <, >=, >  available conditions
                     );
-                    $conditions = wp_parse_args( $conditions, $default );
+                    $conditions = wp_parse_args( $field['condition'], $default );
                     $class      = 'conditional';
                     $attributes = " data-cond-option='{$conditions['depend_on']}' data-cond-value='{$conditions['depend_value']}' data-cond-operator='{$conditions['depend_cond']}' ";
                 }
@@ -188,7 +262,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                         </div>
                     <?php endif; ?>
                     <div class="col <?php echo $wrapper_class; ?>">
-                        <?php $this->get_field( $post_id, $field ); ?>
+                        <?php self::add_field( $post_id, $field ); ?>
                     </div>
                 </div>
 
@@ -214,13 +288,14 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
          * @param $post_id
          * @param $field
          */
-        public function get_field( $post_id, $field ) {
+        public static function add_field( $post_id, $field ) {
 
-            $field_id = empty( $field['id'] ) ? $field['name'] : $field['id'];
-
+            if ( empty( $field['parsed'] ) ) {
+                $field = wp_parse_args( $field, self::get_default_field_attr() );
+            }
             $field_attributes = array_merge( array(
                 'name'        => $field['name'],
-                'id'          => $field_id,
+                'id'          => $field['id'],
                 'class'       => $field['class'],
                 'placeholder' => $field['placeholder'],
             ), $field['custom_attr'] );
@@ -229,10 +304,10 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 $field_attributes['required'] = 'required';
             }
 
-            $value       = get_post_meta( $post_id, $field_id, true );
+            $value       = get_post_meta( $post_id, $field['id'], true );
             $saved_value = empty( $value ) ? $field['value'] : $value;
 
-            $custom_attributes = $this->get_custom_attribute( $field_attributes );
+            $custom_attributes = self::get_custom_attribute( $field_attributes );
 
             switch ( $field['type'] ) {
 
@@ -304,7 +379,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
          *
          * @return array
          */
-        function get_custom_attribute( $attr = array(), $other_attr = array() ) {
+        protected static function get_custom_attribute( $attr = array(), $other_attr = array() ) {
             $custom_attributes = array();
 
             if ( ! empty( $attr ) && is_array( $attr ) ) {
