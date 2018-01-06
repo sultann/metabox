@@ -319,9 +319,9 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             $saved_value = empty( $value ) ? $field['value'] : $value;
 
             //color picker
-            if($field['type'] == 'colorpicker'){
+            if ( $field['type'] == 'colorpicker' ) {
                 $field_attributes['class'] .= ' color-picker';
-                if( $field['rgba'] == 'true'){
+                if ( $field['rgba'] == 'true' ) {
                     $field_attributes['data-alpha'] = 'true';
                 }
             }
