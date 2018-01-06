@@ -82,7 +82,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
          * @return void
          */
         public function load_assets() {
-
+            $suffix = ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ? '' : '.min';
             wp_enqueue_media();
             wp_enqueue_style( 'wp-color-picker' );
             wp_enqueue_style( 'select2', plugins_url( 'assets/css/select2.min.css', __FILE__ ) );
@@ -94,8 +94,8 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 'wp-color-picker'
             ], false, true );
 
-            wp_enqueue_style( 'plvr-framework', plugins_url( 'assets/css/framework.min.css', __FILE__ ) );
-            wp_enqueue_script( 'plvr-framework', plugins_url( 'assets/js/framework.js', __FILE__ ), [ 'jquery' ], false, true );
+            wp_enqueue_style( 'plvr-framework', plugins_url( "assets/css/framework{$suffix}.css", __FILE__ ) );
+            wp_enqueue_script( 'plvr-framework', plugins_url( "assets/js/framework.js", __FILE__ ), [ 'jquery' ], false, true );
         }
 
         /**
@@ -141,6 +141,8 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 'addon'         => '',
                 'addon_pos'     => '',
                 'required'      => '',
+                'select2'       => '',
+                'multiple'      => '',
                 'options'       => array(),
                 'custom_attr'   => array(),
                 'condition'     => array(),
@@ -163,8 +165,14 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             $result = [];
             foreach ( $fields as $field ) {
                 $field       = wp_parse_args( $field, self::get_default_field_attr() );
+                $is_multiple = empty( $field['multiple'] ) ? false : true;
                 $field_id    = empty( $field['id'] ) ? $field['name'] : $field['id'];
                 $field['id'] = $field_id;
+
+                if ( $is_multiple ) {
+                    $field['name']        = "{$field['name']}[]";
+                    $field['custom_attr'] = array_merge( [ 'multiple' => 'multiple' ], $field['custom_attr'] );
+                }
 
                 $result[] = $field;
             }
@@ -217,18 +225,17 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                     continue;
                 }
 
-                $value = ! empty( $_POST[ $field['id'] ] ) ? trim( $_POST[ $field['id'] ] ) : '';
-                if ( ! empty( $field['sanitize'] ) ) {
+                $value = isset( $_POST[ $field['id'] ] ) ? self::trim_this($_POST[ $field['id'] ]) : '';
+
+                if ( isset( $field['sanitize'] ) ) {
                     $function = sanitize_key( $field['sanitize'] );
-                    if ( is_callable( $function ) ) {
-                        $value = call_user_func( $function, $value );
-                    }
+                    $value = self::sanitize_this($function, $value);
                 }
 
                 if ( $field['type'] == 'checkbox' ) {
-                    add_post_meta( $post_id, $field['id'], $value, true ) || update_post_meta( $post_id, $value, '0' );
+                    update_post_meta( $post_id, $value, $value );
                 } else if ( $value !== '' ) {
-                    add_post_meta( $post_id, $field['id'], $value, true ) || update_post_meta( $post_id, $field['id'], $value );
+                    update_post_meta( $post_id, $field['id'], $value );
                 } else {
                     delete_post_meta( $post_id, $field['id'] );
                 }
@@ -316,7 +323,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             }
 
             $value       = get_post_meta( $post_id, $field['id'], true );
-            $saved_value = empty( $value ) ? $field['value'] : $value;
+            $saved_value = self::trim_this($value) == '' ? $field['value'] : $value;
 
             //color picker
             if ( $field['type'] == 'colorpicker' ) {
@@ -344,8 +351,10 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 case 'select':
                     if ( $field['options'] ) {
                         echo '<select ' . implode( ' ', $custom_attributes ) . '>';
+                        $saved_value = (array) $saved_value;
                         foreach ( $field['options'] as $key => $value ) {
-                            printf( "<option value='%s' %s>%s</option>\n", $key, selected( $saved_value, $key, false ), $value );
+                            $selected = in_array($key, $saved_value)? " selected='selected' ": '';
+                            printf( "<option value='%s' %s>%s</option>\n", $key, $selected, $value );
                         }
                         echo '</select>';
                     }
@@ -419,6 +428,41 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             }
 
             return $custom_attributes;
+        }
+
+        /**
+         * Trim data based on type
+         *
+         * @since 1.2.9
+         *
+         * @param $data
+         *
+         * @return array|string
+         */
+        protected static function trim_this( $data ) {
+            if ( is_array( $data ) ) {
+                return array_map( 'trim', $data );
+            }
+            return trim( $data );
+
+        }
+
+        /**
+         * Sanitize value
+         * @param $function
+         * @param $value
+         *
+         * @return array|mixed
+         */
+        protected static function sanitize_this($function, $value){
+            if ( is_callable( $function ) ) {
+                if( is_array($value)){
+                   return array_map($function, $value);
+                }
+                return call_user_func( $function, $value );
+            }
+
+            return $value;
         }
 
 
