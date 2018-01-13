@@ -86,8 +86,10 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             wp_enqueue_media();
             wp_enqueue_style( 'wp-color-picker' );
             wp_enqueue_style( 'select2', plugins_url( 'assets/css/select2.min.css', __FILE__ ) );
+            wp_enqueue_style( 'tooltipster', plugins_url( 'assets/css/tooltipster.bundle.min.css', __FILE__ ) );
             wp_enqueue_script( 'select2-js', plugins_url( 'assets/js/select2.min.js', __FILE__ ), [ 'jquery' ], false, true );
             wp_enqueue_script( 'conditionize', plugins_url( 'assets/js/conditionize.js', __FILE__ ), [ 'jquery' ], false, true );
+            wp_enqueue_script( 'tooltipster', plugins_url( 'assets/js/tooltipster.bundle.min.js', __FILE__ ), [ 'jquery' ], false, true );
 
             wp_enqueue_script( 'wp-color-picker-alpha', plugins_url( 'assets/js/wp-color-picker-alpha.min.js', __FILE__ ), [
                 'jquery',
@@ -136,6 +138,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 'placeholder'   => '',
                 'sanitize'      => '',
                 'help'          => '',
+                'tooltip'       => '',
                 'class'         => '',
                 'wrapper_class' => '',
                 'addon'         => '',
@@ -225,11 +228,11 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                     continue;
                 }
 
-                $value = isset( $_POST[ $field['id'] ] ) ? self::trim_this($_POST[ $field['id'] ]) : '';
+                $value = isset( $_POST[ $field['id'] ] ) ? self::trim_this( $_POST[ $field['id'] ] ) : '';
 
                 if ( isset( $field['sanitize'] ) ) {
                     $function = sanitize_key( $field['sanitize'] );
-                    $value = self::sanitize_this($function, $value);
+                    $value    = self::sanitize_this( $function, $value );
                 }
 
                 if ( $field['type'] == 'checkbox' ) {
@@ -272,6 +275,10 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 }
                 //if any special wrapper required around field
                 $wrapper_class = ! empty( $field['wrapper_class'] ) ? sanitize_key( $field['wrapper_class'] ) : '';
+                $tooltip       = ! empty( $field['tooltip'] ) ? strip_tags( $field['tooltip'] ) : false;
+                if ( $tooltip ) {
+                    $wrapper_class .= " plvr-has-tooltip";
+                }
                 ?>
                 <div class="row plvr-form-field <?php echo $class; ?>" <?php echo $attributes; ?>>
                     <?php if ( '' !== $field['label'] ): ?>
@@ -280,6 +287,10 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                         </div>
                     <?php endif; ?>
                     <div class="col <?php echo $wrapper_class; ?>">
+                        <?php if ( $tooltip ) : ?>
+                            <span class="dashicons dashicons-editor-help plvr-tooltip"
+                                  title="<?php echo $tooltip; ?>"></span>
+                        <?php endif; ?>
                         <?php self::add_field( $post_id, $field ); ?>
                     </div>
                 </div>
@@ -323,7 +334,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             }
 
             $value       = get_post_meta( $post_id, $field['id'], true );
-            $saved_value = self::trim_this($value) == '' ? $field['value'] : $value;
+            $saved_value = self::trim_this( $value ) == '' ? $field['value'] : $value;
 
             //color picker
             if ( $field['type'] == 'colorpicker' ) {
@@ -353,7 +364,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                         echo '<select ' . implode( ' ', $custom_attributes ) . '>';
                         $saved_value = (array) $saved_value;
                         foreach ( $field['options'] as $key => $value ) {
-                            $selected = in_array($key, $saved_value)? " selected='selected' ": '';
+                            $selected = in_array( $key, $saved_value ) ? " selected='selected' " : '';
                             printf( "<option value='%s' %s>%s</option>\n", $key, $selected, $value );
                         }
                         echo '</select>';
@@ -443,22 +454,25 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             if ( is_array( $data ) ) {
                 return array_map( 'trim', $data );
             }
+
             return trim( $data );
 
         }
 
         /**
          * Sanitize value
+         *
          * @param $function
          * @param $value
          *
          * @return array|mixed
          */
-        protected static function sanitize_this($function, $value){
+        protected static function sanitize_this( $function, $value ) {
             if ( is_callable( $function ) ) {
-                if( is_array($value)){
-                   return array_map($function, $value);
+                if ( is_array( $value ) ) {
+                    return array_map( $function, $value );
                 }
+
                 return call_user_func( $function, $value );
             }
 

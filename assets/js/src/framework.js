@@ -20,6 +20,12 @@ window.Pluginever_Framework = (function(window, document, $, undefined){
            $('.select2').select2();
        }
 
+        $('.plvr-tooltip').tooltipster({
+            // fixedWidth: 0,
+            maxWidth: 300,
+        });
+
+
         //condition
         $('.conditional').conditionize();
 
