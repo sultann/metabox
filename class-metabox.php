@@ -141,6 +141,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 'tooltip'       => '',
                 'class'         => '',
                 'wrapper_class' => '',
+                'title'         => '',
                 'addon'         => '',
                 'addon_pos'     => '',
                 'required'      => '',
@@ -236,7 +237,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 }
 
                 if ( $field['type'] == 'checkbox' ) {
-                    update_post_meta( $post_id, $value, $value );
+                    update_post_meta( $post_id, $field['id'], $value );
                 } else if ( $value !== '' ) {
                     update_post_meta( $post_id, $field['id'], $value );
                 } else {
@@ -258,35 +259,38 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             echo '<div class="plvr-framework ' . $lazy_loading . '">';
             echo '<div class="container">';
             echo wp_nonce_field( 'pluginever_fields_nonce', 'pluginever_metabox_nonce' );
+            do_action( 'plvr_framework_before_metabox-'.$this->id, $post, $this->id );
             do_action( 'plvr_framework_before_metabox', $post, $this->id );
             foreach ( $this->fields as $field ) {
 
-                $class      = '';
-                $attributes = '';
+                $class         = [];
+                $wrapper_class = [];
+                $attributes    = '';
                 if ( ! empty( $field['condition'] ) ) {
-                    $default    = array(
+                    $default         = array(
                         'depend_on'    => '',
                         'depend_value' => '',
                         'depend_cond'  => '', // ==, !=, <=, <, >=, >  available conditions
                     );
-                    $conditions = wp_parse_args( $field['condition'], $default );
-                    $class      = 'conditional';
-                    $attributes = " data-cond-option='{$conditions['depend_on']}' data-cond-value='{$conditions['depend_value']}' data-cond-operator='{$conditions['depend_cond']}' ";
+                    $conditions      = wp_parse_args( $field['condition'], $default );
+                    $wrapper_class[] = 'conditional';
+                    $attributes      = " data-cond-option='{$conditions['depend_on']}' data-cond-value='{$conditions['depend_value']}' data-cond-operator='{$conditions['depend_cond']}' ";
                 }
                 //if any special wrapper required around field
-                $wrapper_class = ! empty( $field['wrapper_class'] ) ? sanitize_key( $field['wrapper_class'] ) : '';
-                $tooltip       = ! empty( $field['tooltip'] ) ? strip_tags( $field['tooltip'] ) : false;
+                $wrapper_class[] = ! empty( $field['wrapper_class'] ) ? sanitize_key( $field['wrapper_class'] ) : '';
+                $tooltip         = ! empty( $field['tooltip'] ) ? strip_tags( $field['tooltip'] ) : false;
                 if ( $tooltip ) {
-                    $wrapper_class .= " plvr-has-tooltip";
+                    $class[] = "plvr-has-tooltip";
                 }
                 ?>
-                <div class="row plvr-form-field <?php echo $class; ?>" <?php echo $attributes; ?>>
+                <div
+                    class="row plvr-form-field <?php echo implode( ' ', $wrapper_class ); ?>" <?php echo $attributes; ?>>
                     <?php if ( '' !== $field['label'] ): ?>
                         <div class="col-4">
                             <label for="<?php echo $field['name']; ?>"><?php echo $field['label'] ?></label>
                         </div>
                     <?php endif; ?>
-                    <div class="col <?php echo $wrapper_class; ?>">
+                    <div class="col <?php echo implode( ' ', $class ); ?>">
                         <?php if ( $tooltip ) : ?>
                             <span class="dashicons dashicons-editor-help plvr-tooltip"
                                   title="<?php echo $tooltip; ?>"></span>
@@ -301,7 +305,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
 
                 echo $output;
             }
-
+            do_action( 'plvr_framework_after_metabox-'.$this->id, $post, $this->id );
             do_action( 'plvr_framework_after_metabox', $post, $this->id );
 
             echo '</div>';
@@ -362,9 +366,9 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 case 'select':
                     if ( $field['options'] ) {
                         echo '<select ' . implode( ' ', $custom_attributes ) . '>';
-                        $saved_value = (array) $saved_value;
                         foreach ( $field['options'] as $key => $value ) {
-                            $selected = in_array( $key, $saved_value ) ? " selected='selected' " : '';
+                            $saved_value = (array) $saved_value;
+                            $selected    = in_array( $key, $saved_value ) ? " selected='selected' " : '';
                             printf( "<option value='%s' %s>%s</option>\n", $key, $selected, $value );
                         }
                         echo '</select>';
@@ -379,7 +383,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                     echo '<span class="checkbox">';
                     echo '<label for="' . esc_attr( $field_attributes['id'] ) . '">';
                     echo '<input type="checkbox" ' . checked( $saved_value, '1', false ) . ' value="1" ' . implode( ' ', $custom_attributes ) . ' />';
-                    echo wp_kses_post( $field['label'] );
+                    echo wp_kses_post( $field['title'] );
                     echo wp_kses_post( $field['help'] );
                     echo '</label>';
                     echo '</span>';
