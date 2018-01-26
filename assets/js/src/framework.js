@@ -16,9 +16,7 @@ window.Pluginever_Framework = (function(window, document, $, undefined){
 
 	app.init = function() {
 	    //initialize select 2
-       if( $('.select2').length > 0){
-           $('.select2').select2();
-       }
+        $('.plvr-select2').select2();
 
         $('.plvr-tooltip').tooltipster({
             // fixedWidth: 0,
@@ -27,7 +25,7 @@ window.Pluginever_Framework = (function(window, document, $, undefined){
 
 
         //condition
-        $('.conditional').conditionize();
+        $('.plvr-conditional').conditionize();
 
         //lazy loading
         setTimeout(function () {

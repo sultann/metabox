@@ -10,6 +10,10 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
         protected static $_instance = array();
 
         /**
+         * @var string
+         */
+        protected $version = '1.0.1';
+        /**
          * @var array An array where are saved all metabox settings options
          *
          * @since 1.0
@@ -82,22 +86,28 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
          * @return void
          */
         public function load_assets() {
-            $suffix = ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ? '' : '.min';
-            wp_enqueue_media();
-            wp_enqueue_style( 'wp-color-picker' );
-            wp_enqueue_style( 'select2', plugins_url( 'assets/css/select2.min.css', __FILE__ ) );
-            wp_enqueue_style( 'tooltipster', plugins_url( 'assets/css/tooltipster.bundle.min.css', __FILE__ ) );
-            wp_enqueue_script( 'select2-js', plugins_url( 'assets/js/select2.min.js', __FILE__ ), [ 'jquery' ], false, true );
-            wp_enqueue_script( 'conditionize', plugins_url( 'assets/js/conditionize.js', __FILE__ ), [ 'jquery' ], false, true );
-            wp_enqueue_script( 'tooltipster', plugins_url( 'assets/js/tooltipster.bundle.min.js', __FILE__ ), [ 'jquery' ], false, true );
+            $current_page = get_current_screen();
 
-            wp_enqueue_script( 'wp-color-picker-alpha', plugins_url( 'assets/js/wp-color-picker-alpha.min.js', __FILE__ ), [
-                'jquery',
-                'wp-color-picker'
-            ], false, true );
+            if ( ! empty( $current_page->id )
+                 && in_array( $current_page->id, (array) $this->options['screen'] ) ) {
 
-            wp_enqueue_style( 'plvr-framework', plugins_url( "assets/css/framework{$suffix}.css", __FILE__ ) );
-            wp_enqueue_script( 'plvr-framework', plugins_url( "assets/js/framework.js", __FILE__ ), [ 'jquery' ], false, true );
+                $suffix = ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ? '' : '.min';
+                wp_enqueue_media();
+                wp_enqueue_style( 'wp-color-picker' );
+                wp_enqueue_style( 'select2', plugins_url( 'assets/css/select2.min.css', __FILE__ ), false, $this->version );
+                wp_enqueue_style( 'tooltipster', plugins_url( 'assets/css/tooltipster.bundle.min.css', __FILE__ ) );
+                wp_enqueue_script( 'select2-js', plugins_url( 'assets/js/select2.min.js', __FILE__ ), [ 'jquery' ], $this->version, true );
+                wp_enqueue_script( 'conditionize', plugins_url( 'assets/js/conditionize.js', __FILE__ ), [ 'jquery' ], $this->version, true );
+                wp_enqueue_script( 'tooltipster', plugins_url( 'assets/js/tooltipster.bundle.min.js', __FILE__ ), [ 'jquery' ], $this->version, true );
+
+                wp_enqueue_script( 'wp-color-picker-alpha', plugins_url( 'assets/js/wp-color-picker-alpha.min.js', __FILE__ ), [
+                    'jquery',
+                    'wp-color-picker'
+                ], $this->version, true );
+
+                wp_enqueue_style( 'plvr-framework', plugins_url( "assets/css/framework{$suffix}.css", __FILE__ ), false, $this->version );
+                wp_enqueue_script( 'plvr-framework', plugins_url( "assets/js/framework.js", __FILE__ ), [ 'jquery' ], $this->version, true );
+            }
         }
 
         /**
@@ -259,7 +269,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             echo '<div class="plvr-framework ' . $lazy_loading . '">';
             echo '<div class="container">';
             echo wp_nonce_field( 'pluginever_fields_nonce', 'pluginever_metabox_nonce' );
-            do_action( 'plvr_framework_before_metabox-'.$this->id, $post, $this->id );
+            do_action( 'plvr_framework_before_metabox-' . $this->id, $post, $this->id );
             do_action( 'plvr_framework_before_metabox', $post, $this->id );
             foreach ( $this->fields as $field ) {
 
@@ -273,7 +283,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                         'depend_cond'  => '', // ==, !=, <=, <, >=, >  available conditions
                     );
                     $conditions      = wp_parse_args( $field['condition'], $default );
-                    $wrapper_class[] = 'conditional';
+                    $wrapper_class[] = 'plvr-conditional';
                     $attributes      = " data-cond-option='{$conditions['depend_on']}' data-cond-value='{$conditions['depend_value']}' data-cond-operator='{$conditions['depend_cond']}' ";
                 }
                 //if any special wrapper required around field
@@ -305,7 +315,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
 
                 echo $output;
             }
-            do_action( 'plvr_framework_after_metabox-'.$this->id, $post, $this->id );
+            do_action( 'plvr_framework_after_metabox-' . $this->id, $post, $this->id );
             do_action( 'plvr_framework_after_metabox', $post, $this->id );
 
             echo '</div>';
@@ -346,6 +356,10 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 if ( $field['rgba'] == 'true' ) {
                     $field_attributes['data-alpha'] = 'true';
                 }
+            }
+
+            if ( $field['select2'] == 'true' ) {
+                $field_attributes['class'] .= ' plvr-select2';
             }
 
             $custom_attributes = self::get_custom_attribute( $field_attributes );
