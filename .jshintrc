@@ -20,7 +20,6 @@
     "JSON": false,
     "wp": false,
     "Vue": false,
-    "swal": false,
-    "erpMailpoetGlobal": false
+    "swal": false
   }
 }

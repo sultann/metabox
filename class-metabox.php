@@ -424,7 +424,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             }
 
             if ( ! empty( $field['help'] ) ) {
-                echo '<span class="help">' . wp_kses_post( $field['help'] ) . '</span>';
+                echo '<span class="help">' .  $field['help'] . '</span>';
             }
         }
 
