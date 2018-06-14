@@ -160,7 +160,7 @@
     margin-left: 10px; }
   .plvr-framework .checkbox + .checkbox {
     margin-left: 10px; }
-  .plvr-framework button,
+  .plvr-framework button:not(.wp-switch-editor, .add_media),
   .plvr-framework .button,
   .plvr-framework [type=submit] {
     height: 45px;
@@ -174,24 +174,24 @@
     border: 1px solid #111;
     border-radius: 2px;
     transition: all 0.2s ease; }
-    .plvr-framework button:hover, .plvr-framework button:focus,
+    .plvr-framework button:not(.wp-switch-editor, .add_media):hover, .plvr-framework button:not(.wp-switch-editor, .add_media):focus,
     .plvr-framework .button:hover,
     .plvr-framework .button:focus,
     .plvr-framework [type=submit]:hover,
     .plvr-framework [type=submit]:focus {
       opacity: 0.9; }
-    .plvr-framework button:active, .plvr-framework button:active,
+    .plvr-framework button:not(.wp-switch-editor, .add_media):active, .plvr-framework button:not(.wp-switch-editor, .add_media):active,
     .plvr-framework .button:active,
     .plvr-framework .button:active,
     .plvr-framework [type=submit]:active,
     .plvr-framework [type=submit]:active {
       opacity: 0.7; }
-    .plvr-framework button[disabled],
+    .plvr-framework button:not(.wp-switch-editor, .add_media)[disabled],
     .plvr-framework .button[disabled],
     .plvr-framework [type=submit][disabled] {
       opacity: 0.8;
       cursor: not-allowed; }
-    .plvr-framework button.outline,
+    .plvr-framework button:not(.wp-switch-editor, .add_media).outline,
     .plvr-framework .button.outline,
     .plvr-framework [type=submit].outline {
       color: #111;

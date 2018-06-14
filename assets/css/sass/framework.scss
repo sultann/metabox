@@ -196,7 +196,7 @@
     }
 
     //button
-    button,
+    button:not(.wp-switch-editor, .add_media),
     .button,
     [type=submit] {
         height: 45px;

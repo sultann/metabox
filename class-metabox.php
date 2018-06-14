@@ -157,6 +157,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                 'required'      => '',
                 'select2'       => '',
                 'multiple'      => '',
+                'settings'      => array(), //for wp_editor
                 'options'       => array(),
                 'custom_attr'   => array(),
                 'condition'     => array(),
@@ -393,6 +394,27 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
                     echo '<textarea ' . implode( ' ', $custom_attributes ) . '>' . esc_textarea( $saved_value ) . '</textarea>';
                     break;
 
+                case 'wysiwyg':
+                    $default  = [
+                        'wpautop'             => true,
+                        'media_buttons'       => true,
+                        'default_editor'      => '',
+                        'drag_drop_upload'    => false,
+                        'textarea_name'       => '',
+                        'textarea_rows'       => 20,
+                        'tabindex'            => '',
+                        'tabfocus_elements'   => ':prev,:next',
+                        'editor_css'          => '',
+                        'editor_class'        => '',
+                        'teeny'               => false,
+                        'dfw'                 => false,
+                        '_content_editor_dfw' => false,
+                        'tinymce'             => true,
+                        'quicktags'           => true
+                    ];
+                    $settings = wp_parse_args( $field['settings'], $default );
+                    wp_editor( $saved_value, $field_attributes['name'], $settings );
+                    break;
                 case 'checkbox':
                     echo '<span class="checkbox">';
                     echo '<label for="' . esc_attr( $field_attributes['id'] ) . '">';
@@ -424,7 +446,7 @@ if ( ! class_exists( '\Pluginever\Framework\Metabox' ) ):
             }
 
             if ( ! empty( $field['help'] ) ) {
-                echo '<span class="help">' .  $field['help'] . '</span>';
+                echo '<span class="help">' . $field['help'] . '</span>';
             }
         }
 
