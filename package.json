@@ -26,5 +26,8 @@
     "grunt-phpcs": "^0.4.0",
     "jshint-stylish": "^2.2.1"
   },
-  "keywords": []
+  "keywords": [],
+  "dependencies": {
+    "npm": "^6.1.0"
+  }
 }
