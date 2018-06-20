@@ -9,7 +9,9 @@ You can see a list of available field types [here](https://github.com/sultann/me
 ## Installation
 1. Place the metabox directory inside of your theme or plugin.
 2. Now include the metabox class `require dirname(__FILE__) . '/metabox/class-metabox.php';`.
-2. ```php
+3. 
+
+```php
 add_action( 'admin_init', 'add_custom_metabox' );
 
 function(add_custom_metabox){
